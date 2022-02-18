@@ -2,6 +2,7 @@ import os
 import shutil
 import time
 import sys
+import logging
 
 
 def sinch(frm, to, time_last_sinch):
@@ -14,10 +15,12 @@ def sinch(frm, to, time_last_sinch):
         mod_file_time = os.path.getmtime(fr'{dir_from}\{i}')  # время и дата последнего изменения файла
         if os.path.isfile(fr'{dir_from}\{i}') and mod_file_time > last_sinch_dt:  # проверяем когда модифицировался файл
             shutil.copy(fr'{dir_from}\{i}', dir_to)
-            print('Копируем файл')
+            print(f'Копируем файл <<{i}>>')
+            logging.info(f'Копируем файл <<{i}>>')
         if os.path.isdir(fr'{dir_from}\{i}'):
             if not os.path.isdir(fr'{dir_to}\{i}'):  # если нет папки в целевой директории
-                print('Создаем папку')
+                print(f'Создаем папку <<{i}>>')
+                logging.info(f'Создаем папку <<{i}>>')
                 os.mkdir(fr'{dir_to}\{i}')  # создаем папку
             frm_for_dir = fr'{dir_from}\{i}'
             to_for_dir = fr'{dir_to}\{i}'
@@ -25,12 +28,13 @@ def sinch(frm, to, time_last_sinch):
     for i in content_dir_to:  # удаляем ненужные файлы
         if i not in content_dir_from:
             if os.path.isfile(fr'{dir_to}\{i}'):
-                print('Удаляем файл')
+                print(f'Удаляем файл <<{i}>>')
+                logging.info(f'Удаляем файл <<{i}>>')
                 os.remove(fr'{dir_to}\{i}')
             else:
-                print('Удаляем папку')
-                os.rmdir(fr'{dir_to}\{i}')
-    write_sinch_date()  # пишем дату последней синхронизации
+                print(f'Удаляем папку <<{i}>>')
+                logging.info(f'Удаляем папку <<{i}>>')
+                shutil.rmtree(fr'{dir_to}\{i}', ignore_errors=True)
 
 
 # пишем дату и время в файл
@@ -55,17 +59,20 @@ def start(frm, to, idle_per):
     dir_f = frm
     dir_t = to
     waiting = idle_per
-    last_sinch_dt = get_sinch_date()
     while True:
+        last_sinch_dt = get_sinch_date()  # получаем дату последней синхронизации
         sinch(dir_f, dir_t, last_sinch_dt)
+        write_sinch_date()  # пишем дату последней синхронизации
         time.sleep(int(waiting) * 60)
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 4:
+    if len(sys.argv) == 5:
         dir_from = sys.argv[1]
         dir_to = sys.argv[2]
         sinch_period = sys.argv[3]
+        dir_for_logs = sys.argv[4]
+        logging.basicConfig(filename=f'{dir_for_logs}/sinch_log.txt', level=logging.INFO)
         start(dir_from, dir_to, sinch_period)
     else:
-        raise AttributeError(f'При запуске программы следует указывать 3 аргумента, вы указали {len(sys.argv) - 1}')
+        raise AttributeError(f'При запуске программы следует указывать 4 аргумента, вы указали {len(sys.argv) - 1}')
