@@ -4,6 +4,8 @@ import time
 import sys
 import logging
 
+check_mod_file_time = 1
+
 
 def sinch(frm, to, time_last_sinch):
     dir_from = frm
@@ -46,12 +48,15 @@ def write_sinch_date():
 
 # читаем из файла время последней синхронизации
 def get_sinch_date():
-    try:
-        with open('sinch_date.txt', 'r') as file:
-            return float(file.read())
-    except FileNotFoundError:
-        with open('sinch_date.txt', 'w') as file:
-            file.write('')
+    if check_mod_file_time == 1:
+        try:
+            with open('sinch_date.txt', 'r') as file:
+                return float(file.read())
+        except FileNotFoundError:
+            with open('sinch_date.txt', 'w') as file:
+                file.write('')
+            return 0
+    else:
         return 0
 
 
